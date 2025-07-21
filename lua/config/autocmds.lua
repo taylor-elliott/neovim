@@ -24,7 +24,6 @@ vim.api.nvim_create_autocmd("InsertLeave", {
 			return
 		end
 
-		-- 🔍 Check if any LSP is attached
 		local clients = vim.lsp.get_active_clients({ bufnr = 0 })
 		if #clients == 0 then
 			return
@@ -56,7 +55,7 @@ autocmd("LspAttach", {
 	group = MyGroup,
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
-		-- Only call if lsp.inlay_hint is a function AND the LSP supports it
+
 		if
 			type(lsp.inlay_hint) == "function"
 			and client
