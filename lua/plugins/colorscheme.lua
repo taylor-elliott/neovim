@@ -6,7 +6,7 @@ return {
         config = function()
             require("tokyonight").setup({
                 style = "storm",
-                transparent = true, -- enable transparent background
+                transparent = true, 
                 terminal_colors = true,
                 styles = {
                     comments = { italic = false },
@@ -15,10 +15,8 @@ return {
                     floats = "transparent",
                 },
             })
-            -- Set colorscheme
             vim.cmd.colorscheme("tokyonight")
 
-            -- Force transparency on common floating highlights
             local groups = {
                 "Normal",
                 "NormalNC",
