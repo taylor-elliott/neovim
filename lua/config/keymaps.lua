@@ -1,4 +1,6 @@
 local extract = require("utils.extract")
+local reload = require("utils.reload")
+
 local g = vim.g
 local map = vim.keymap.set
 local buf = vim.lsp.buf
@@ -12,7 +14,21 @@ map({ "n", "i", "v" }, "<Down>", "<nop>", { noremap = true, silent = true })
 map({ "n", "i", "v" }, "<Left>", "<nop>", { noremap = true, silent = true })
 map({ "n", "i", "v" }, "<Right>", "<nop>", { noremap = true, silent = true })
 
+map({ "n", "i", "v" }, "<C-s>", "<Esc>:update<CR>a", { silent = true })
+
+map("n", "H", "^", { desc = "Go to beginning of line" })
+map("n", "L", "$", { desc = "Go to end of line" })
+map("v", "H", "0", { desc = "Go to beginning of line" })
+map("v", "L", "$", { desc = "Go to end of line" })
+
+map("i", "<C-h>", "<C-o>h", { noremap = true, silent = true }) -- Move left
+map("i", "<C-j>", "<C-o>j", { noremap = true, silent = true }) -- Move down
+map("i", "<C-k>", "<C-o>k", { noremap = true, silent = true }) -- Move up
+map("i", "<C-l>", "<C-o>l", { noremap = true, silent = true }) -- Move right
+vim.api.nvim_set_keymap("n", "<bs>", [[ciw]], { noremap = true })
+
 map("i", "jj", "<Esc>")
+
 map("n", "Q", function()
 	if vim.bo.modified then
 		vim.cmd("write")
@@ -21,7 +37,9 @@ map("n", "Q", function()
 		print("No changes")
 	end
 end, { desc = "Smart save current file" })
-map("n", "<CR>", "o<Esc>", { desc = "Insert newline " })
+-- map("n", "<CR>", "O<Esc>", { desc = "Insert newline " })
+map("n", "<CR>", "i<CR><Esc>", { desc = "Insert mode CR then back to normal" })
+
 map("n", "<BS>", "kJ", { desc = "Join with previous line like backspace" })
 map("n", "`", function()
 	local is_diag_open = false
@@ -55,10 +73,9 @@ map("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease Window Wi
 map("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase Window Width" })
 
 -- Move Lines
-map("n", "J", "<cmd>execute 'move .+' . v:count1<cr>==", { desc = "Move Line Down" })
-map("n", "K", "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==", { desc = "Move Line Up" })
-map("i", "J", "<esc><cmd>m .+1<cr>==gi", { desc = "Move Line Down" })
-map("i", "K", "<esc><cmd>m .-2<cr>==gi", { desc = "Move Line Up" })
+-- map("n", "K", "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==", { desc = "Move Line Up" })
+-- map("n", "J", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
+-- map("n", "K", ":m '<-2<CR>gv=gv", { desc = "Move Selection Up" })
 map("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
 map("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move Selection Up" })
 
@@ -75,21 +92,47 @@ end, { noremap = true, silent = true })
 map("n", "J", "mzJ`z")
 map("n", "<C-d>", "<C-d>zz")
 map("n", "<C-u>", "<C-u>zz")
-map("n", "n", "nzzzv")
+map("n", "n", function()
+	local success, _ = pcall(vim.cmd, "normal! nzzzv")
+	if not success then
+		vim.notify("Pattern not found", vim.log.levels.WARN)
+	end
+end, { desc = "Repeat search and center" })
 map("n", "N", "Nzzzv")
 map("n", "=ap", "ma=ap'a")
 
-map("x", "<leader>p", [["_dP]])
+map("x", "<leader>p", [["_dP]], { desc = "paste without overwriting what you copied" })
 
-map({ "n", "v" }, "<leader>y", [["+y]])
-map("n", "<leader>Y", [["+Y]])
+map(
+	{ "n", "v" },
+	"<leader>y",
+	[["+y]],
+	{ desc = "In both normal and visual mode, yank (copy) to the system clipboard (+ register)" }
+)
+map("n", "<leader>Y", [["+Y]], {
+	desc = "Yanks (copies) from the current line to the end of line to system clipboard (just like Y but to + register).",
+})
+map("i", "<C-y>", "<C-r>0", { desc = "Paste last yanked text in insert mode" })
+map("i", "<C-p>", "<C-r>1", { desc = "Paste last deleted text in insert mode" })
+map(
+	{ "n", "v" },
+	"<leader>d",
+	'"_d',
+	{ desc = "Deletes text into the black hole register, so it doesn't overwrite your clipboard" }
+)
 
-map({ "n", "v" }, "<leader>d", '"_d')
+map("i", "<F9>", function()
+	-- Show notification
+	vim.notify("Pasting from clipboard", vim.log.levels.INFO, { title = "Insert Mode Paste" })
+
+	-- Paste from system clipboard
+	local keys = vim.api.nvim_replace_termcodes("<C-r>+", true, false, true)
+	vim.api.nvim_feedkeys(keys, "i", false)
+end, { desc = "Paste from clipboard with notification" })
+
+map("n", "<leader>P", '"+p', { desc = "Paste from system clipboard" })
 
 -- map("n", "Q", "<nop>")
-map("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
-map("n", "<M-h>", "<cmd>silent !tmux-sessionizer -s 0 --vsplit<CR>")
-map("n", "<M-H>", "<cmd>silent !tmux neww tmux-sessionizer -s 0<CR>")
 
 map("n", "<C-k>", "<cmd>cnext<CR>zz")
 map("n", "<C-j>", "<cmd>cprev<CR>zz")
@@ -97,18 +140,8 @@ map("n", "<leader>k", "<cmd>lnext<CR>zz")
 map("n", "<leader>j", "<cmd>lprev<CR>zz")
 
 map("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
--- map("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
-
-map("n", "<leader>ee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
-
-map("n", "<leader>ea", 'oassert.NoError(err, "")<Esc>F";a')
-
-map("n", "<leader>ef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
-
-map("n", "<leader>el", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
 
 map("v", "<leader>mv", extract.create_component, { desc = "Extract selection to src/components/{Name}.tsx" })
-
 map("v", "<leader>mb", extract.set_barrel, { desc = "Extract component {Name}.tsx and update barrel index.ts" })
 
 -- map("n", "<leader>xx", function()
@@ -131,22 +164,30 @@ map("n", "<leader>xq", dia.setqflist, { desc = "Diagnostic Quickfix List" })
 
 map({ "n", "x" }, "<leader>cp", ":CommentYankPaste<CR>", { desc = "Comment Yank Paste" })
 
-map("i", "<C-k>", buf.signature_help, { desc = "Signature Help" })
-
 map("n", "<leader>ca", buf.code_action, {
 	desc = "LSP Code Actions",
 })
 
 map("n", "=", function()
-	vim.cmd("w") -- Save file
-	vim.cmd("!ts-node %")
-end, { desc = "Run current TypeScript file" })
+	vim.cmd("!npm run build ")
+end, { desc = "Build current TypeScript file" })
 
-map("n", "-", function()
-	vim.cmd("w") -- Save file
-	vim.cmd("!tsc %")
-end, { desc = "Compile the current TypeScript file" })
-
-map("n", "0", function()
-	vim.cmd("!node %")
-end, { desc = "Run compiled ts file" })
+-- map("n", "0", function()
+--     vim.cmd("!node ./dist/index.js\n\n")
+-- end, { desc = "Compile the current TypeScript file" })
+-- Create the user command that calls ReloadModule with an argument
+vim.api.nvim_create_user_command("ReloadModule", function(opts)
+	reload.ReloadModule(opts.args)
+end, {
+	nargs = 1,
+	complete = function(ArgLead)
+		local modules = { "keymaps", "options", "autocmds" }
+		local matches = {}
+		for _, mod in ipairs(modules) do
+			if mod:match("^" .. ArgLead) then
+				table.insert(matches, mod)
+			end
+		end
+		return matches
+	end,
+})

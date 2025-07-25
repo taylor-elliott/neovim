@@ -5,7 +5,7 @@ local t = ls.text_node
 local i = ls.insert_node
 local rep = require("luasnip.extras").rep
 return {
-	s("clg", {
+	s("con", {
 		t("console.log("),
 		i(1, "msg"),
 		t(")"),
@@ -17,7 +17,7 @@ return {
 		i(2, "module"),
 		t("';"),
 	}),
-	s("fn", {
+	s("fun", {
 		t("function "),
 		i(1, "name"),
 		t("("),
@@ -27,7 +27,7 @@ return {
 		t({ "", "}" }),
 	}),
 	s(
-		"cfn",
+		"const ",
 		fmt("const {} = ({}) => {{\n  {}\n}};", {
 			i(1, "name"),
 			i(2),
@@ -35,7 +35,7 @@ return {
 		})
 	),
 	s(
-		"bs",
+		"binarysearch",
 		fmt(
 			[[
 const {} = ({}:{}, {}:{}) => {{
@@ -72,7 +72,7 @@ const {} = ({}:{}, {}:{}) => {{
 	),
 	-- Interface
 	s(
-		"iface",
+		"interface",
 		fmt("interface {} {{\n  {}: {};\n}}", {
 			i(1, "Name"),
 			i(2, "prop"),
@@ -82,7 +82,7 @@ const {} = ({}:{}, {}:{}) => {{
 
 	-- Async function with try/catch
 	s(
-		"afn",
+		"afun",
 		fmt(
 			[[
 async function {}({}) {{
@@ -100,7 +100,7 @@ async function {}({}) {{
 		)
 	),
 	s(
-		"ci",
+		"constinterface",
 		fmt(
 			[[
 interface {} {{

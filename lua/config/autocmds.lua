@@ -87,9 +87,6 @@ autocmd("LspAttach", {
 		map("n", "<leader>vrn", function()
 			lsp.buf.rename()
 		end, opts)
-		map("i", "<C-h>", function()
-			lsp.buf.signature_help()
-		end, opts)
 	end,
 })
 

@@ -76,58 +76,106 @@ return {
             },
         })
 
-        local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
-        cmp.setup({
-            snippet = {
-                expand = function(args)
-                    require("luasnip").lsp_expand(args.body)
-                end,
-            },
-            mapping = cmp.mapping.preset.insert({
-                -- Completion navigation
-                ["<C-k>"] = cmp.mapping.select_prev_item(cmp_select),
-                ["<C-j>"] = cmp.mapping.select_next_item(cmp_select),
-
-                -- Confirm selection
-                ["<CR>"] = cmp.mapping.confirm({ select = true }),
-
-                -- Trigger completion
-                ["<C-Space>"] = cmp.mapping.complete(),
-
-                -- Tab to expand or jump in snippet
-                ["<Tab>"] = cmp.mapping(function(fallback)
-                    local luasnip = require("luasnip")
-                    if cmp.visible() then
-                        cmp.select_next_item()
-                    elseif luasnip.expand_or_jumpable() then
-                        luasnip.expand_or_jump()
-                    else
-                        fallback()
-                    end
-                end, { "i", "s" }),
-
-                ["<S-Tab>"] = cmp.mapping(function(fallback)
-                    local luasnip = require("luasnip")
-                    if cmp.visible() then
-                        cmp.select_prev_item()
-                    elseif luasnip.jumpable(-1) then
-                        luasnip.jump(-1)
-                    else
-                        fallback()
-                    end
-                end, { "i", "s" }),
-            }),
-            sources = cmp.config.sources({
-                { name = "nvim_lsp" },
-                { name = "luasnip" },
-            }, {
-                { name = "buffer" },
-            }),
-        })
+        local select_opts = { behavior = cmp.SelectBehavior.Select }
+        local luasnip = require("luasnip")
         require("luasnip.loaders.from_lua").lazy_load({
             paths = vim.fn.stdpath("config") .. "/snippets",
         })
+
+        luasnip.config.set_config({
+            history = false, -- prevent jumping back into old snippets
+            updateevents = "TextChanged,TextChangedI",
+        })
+        cmp.setup({
+            snippet = {
+                expand = function(args)
+                    luasnip.lsp_expand(args.body)
+                end,
+            },
+            preselect = cmp.PreselectMode.None,
+            completion = {
+                completeopt = "menu,menuone,noinsert,noselect",
+            },
+            sources = {
+                { name = "nvim_lsp", keyword_length = 3 },
+                { name = "luasnip",  keyword_length = 3 },
+                { name = "buffer",   keyword_length = 3 },
+                { name = "path",     keyword_length = 3 },
+            },
+            window = {
+                documentation = cmp.config.window.bordered(),
+            },
+            formatting = {
+                fields = { "menu", "abbr", "kind" },
+                format = function(entry, item)
+                    local menu_icon = {
+                        nvim_lsp = "λ",
+                        luasnip = "⋗",
+                        buffer = "Ω",
+                        path = "🖫",
+                    }
+
+                    item.menu = menu_icon[entry.source.name]
+                    return item
+                end,
+            },
+            experimental = {
+                ghost_text = false,
+            },
+            mapping = {
+                -- ["<CR>"] = cmp.mapping.confirm({ select = false }),
+                --
+                ["<CR>"] = cmp.mapping(function(fallback)
+                    if cmp.visible() and cmp.get_selected_entry() then
+                        cmp.confirm({ select = false })
+                    else
+                        fallback()
+                    end
+                end, { "i", "s" }),
+                ["<C-e>"] = cmp.mapping.abort(),
+                ["<leader><CR>"] = cmp.mapping.confirm({ select = true }),
+                ["<Tab>"] = cmp.mapping(function(fallback)
+                    local col = vim.fn.col(".") - 1
+                    if luasnip.jumpable(1) then
+                        luasnip.jump(1)
+                    elseif cmp.visible() then
+                        cmp.select_next_item(select_opts)
+                    elseif col == 0 or vim.fn.getline("."):sub(col, col):match("%s") then
+                        fallback()
+                    else
+                        cmp.complete()
+                    end
+                end, {
+                    ["<S-Tab>"] = cmp.mapping(function(fallback)
+                        if luasnip.jumpable(-1) then
+                            luasnip.jump(-1)
+                        elseif cmp.visible() then
+                            cmp.select_prev_item(select_opts)
+                        else
+                            fallback()
+                        end
+                    end, { "i", "s" }),
+                    "i",
+                    "s",
+                }),
+            },
+        })
+
+        ---
+        -- Diagnostics
+        --
+        local sign = function(opts)
+            vim.fn.sign_define(opts.name, {
+                texthl = opts.name,
+                text = opts.text,
+                numhl = "",
+            })
+        end
+
+        sign({ name = "DiagnosticSignError", text = "✘" })
+        sign({ name = "DiagnosticSignWarn", text = "▲" })
+        sign({ name = "DiagnosticSignHint", text = "⚑" })
+        sign({ name = "DiagnosticSignInfo", text = "" })
 
         vim.diagnostic.config({
             virtual_text = {
