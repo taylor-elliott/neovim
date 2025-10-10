@@ -6,6 +6,57 @@ local i = ls.insert_node
 local rep = require("luasnip.extras").rep
 
 return {
+    s("map", fmt([[
+const {} = {}.map(({}, index) => {{
+  return (
+    <>
+      {}
+    </>
+  );
+}});
+]], {
+        i(1, "mappedList"),
+        i(2, "listName"),
+        i(3, "item"),
+        i(4, "// JSX or expression"),
+    })),
+    s("list", fmt([[
+const {} = [{}];
+]], {
+        i(1, "list"),
+        i(2),
+    })),
+
+    s("div", fmt([[
+<div className="{}">
+    {}
+</div>
+]], {
+        i(1, ""),
+        i(2),
+    })),
+    s("rfc", fmt([[
+
+interface {}Props {{
+  {}
+}}
+
+const {} = (props: {}Props) => {{
+  {}  -- destructuring line or empty
+  return (
+    <div>
+      {}
+    </div>
+  );
+}};
+]], {
+        i(1, "Component"),
+        i(2, "// props"),
+        rep(1),
+        rep(1),
+        i(3, ""), -- destructuring left empty by default
+        i(4, "// JSX"),
+    })),
     s("console", {
         t("console.log("),
         i(1),
@@ -29,14 +80,13 @@ return {
     }),
     s(
         "const",
-        fmt("const {} = ({}):{} => {{\n  {}\n}}", {
-            i(1, "name"),
-            i(2),
-            i(3, "void"),
-            i(4, "// TODO"),
+        fmt("const {} = ({}) => {{\n  {}\n}}", {
+            i(1, "fn"),
+            i(2, "props"),
+            i(3),
         })
     ),
-s(
+    s(
         "binarysearch",
         fmt(
             [[
@@ -72,7 +122,26 @@ const {} = ({}:{}, {}:{}) => {{
             }
         )
     ),
-    -- Interface
+    s("cond", fmt("{{ {1} && <{2} /> }}", {
+        i(1, "name"),
+        i(2, "Component"),
+    })),
+    s("cond_exp", fmt("{{ {1} && (\n  <{2} />\n) }}", {
+        i(1, "name"),
+        i(2, "Component"),
+    })),
+    s("cond_imp_map", fmt("{{ {1}.map(({2}) => (\n  <li key={{ {2}.id }}>{2}.{3}</li>\n)) }}", {
+        i(1, "items"),
+        i(2, "item"),
+        i(3, "name"),
+    })), s(
+    "type",
+    fmt("type {} = {{\n  {}: {};\n}}", {
+        i(1, "name"),
+        i(2, "prop"),
+        i(3, "type"),
+    })
+),
     s(
         "interface",
         fmt("interface {} {{\n  {}: {};\n}}", {
@@ -82,7 +151,6 @@ const {} = ({}:{}, {}:{}) => {{
         })
     ),
 
-    -- Async function with try/catch
     s(
         "afun",
         fmt(

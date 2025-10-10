@@ -1,0 +1,191 @@
+{
+  "header_2": {
+    "prefix": "header_2",
+    "body": [
+      "|  ${1:X} | ${2:X} |",
+      "| :--- | :--- |"
+    ],
+    "description": "Header 2"
+  },
+  "row_2_empty": {
+    "prefix": "empty_row_2",
+    "body": [
+      "| |   |"
+    ],
+    "description": "empty row"
+  },
+  "row_3_empty": {
+    "prefix": "empty_row_3",
+    "body": [
+      "| | |   |"
+    ],
+    "description": "empty row 3"
+  },
+  "header_3": {
+    "prefix": "header_3",
+    "body": [
+      "|  ${1:X} | ${2:X} | ${3:X} |",
+      "| :--- | :--- | :--- |"
+    ],
+    "description": "Header 3"
+  },
+  "2x2_matrix": {
+    "prefix": "2x2_matrix",
+    "body": [
+      "| ${1:a} ${2:b} |",
+      "| ${3:c} ${4:d} |"
+    ],
+    "description": "2X2 Matrix"
+  },
+  "3x3_matrix": {
+    "prefix": "3x3_matrix",
+    "body": [
+      "| ${1:a} ${2:b} ${3:c} |",
+      "| ${4:d} ${5:e} ${6:f} |",
+      "| ${7:g} ${8:h} ${9:i} |"
+    ],
+    "description": "3X3 Matrix"
+  },
+  "2x1_vector": {
+    "prefix": "2x1_vector",
+    "body": [
+      "| ${1:val} |",
+      "| ${2:val} |"
+    ],
+    "description": "2X1 Vector"
+  },
+  "3x1_vector": {
+    "prefix": "3x1_vector",
+    "body": [
+      "| ${1:val} |",
+      "⎢ ${2:val} ⎥",
+      "| ${3:val} |"
+    ],
+    "description": "3X1 Vector"
+  },
+  "4x1_vector": {
+    "prefix": "4x1_vector",
+    "body": [
+      "| ${1:val} |",
+      "⎢ ${2:val} ⎥",
+      "⎢ ${3:val} ⎥",
+      "| ${4:val} |"
+    ],
+    "description": "4X1 Vector"
+  },
+  "5x1_vector": {
+    "prefix": "5x1_vector",
+    "body": [
+      "| ${1:val} |",
+      "⎢ ${2:val} ⎥",
+      "⎢ ${3:val} ⎥",
+      "⎢ ${4:val} ⎥",
+      "| ${5:val} |"
+    ],
+    "description": "5X1 Vector"
+  },
+  "6x1_vector": {
+    "prefix": "6x1_vector",
+    "body": [
+      "| ${1:val} |",
+      "⎢ ${2:val} ⎥",
+      "⎢ ${3:val} ⎥",
+      "⎢ ${4:val} ⎥",
+      "⎢ ${5:val} ⎥",
+      "| ${6:val} |"
+    ],
+    "description": "6X1 Vector"
+  },
+  "7x1_vector": {
+    "prefix": "7x1_vector",
+    "body": [
+      "| ${1:val} |",
+      "⎢ ${2:val} ⎥",
+      "⎢ ${3:val} ⎥",
+      "⎢ ${4:val} ⎥",
+      "⎢ ${5:val} ⎥",
+      "⎢ ${6:val} ⎥",
+      "| ${7:val} |"
+    ],
+    "description": "7X1 Vector"
+  },
+  "8x1_vector": {
+    "prefix": "8x1_vector",
+    "body": [
+      "| ${1:val} |",
+      "⎢ ${2:val} ⎥",
+      "⎢ ${3:val} ⎥",
+      "⎢ ${4:val} ⎥",
+      "⎢ ${5:val} ⎥",
+      "⎢ ${6:val} ⎥",
+      "⎢ ${7:val} ⎥",
+      "| ${8:val} |"
+    ],
+    "description": "8X1 Vector"
+  },
+  "sumfull": {
+    "prefix": "sumfull",
+    "body": [
+      " 𝑛 ",
+      " ∑",
+      "𝑖＝𝟷"
+    ],
+    "description": "Summation symbol block"
+  },
+  "divide": {
+    "prefix": "divide",
+    "body": [
+      "    ",
+      "       ${1:a}",
+      "",
+      "${2:b} = ⎯⎯⎯⎯⎯⎯ ",
+      "",
+      "    ",
+      "       ${3:c}"
+    ],
+    "description": "Divide equation"
+  },
+  "header_3_time": {
+    "prefix": "header_3_time",
+    "body": [
+      "|  ${1:X} | ${2:X} | TIME |",
+      "| :--- | :--- | :--- |"
+    ],
+    "description": "Table header with TIME column"
+  },
+  "row_2": {
+    "prefix": "row_2",
+    "body": [
+      "|  ${1: } | ${2: } |"
+    ],
+    "description": "Two-column table row"
+  },
+  "row_3": {
+    "prefix": "row_3",
+    "body": [
+      "|  ${1: } | ${2: } | ${3: } |"
+    ],
+    "description": "Three-column table row"
+  },
+  "row_3_blank": {
+    "prefix": "row_3_blank",
+    "body": [
+      "| | |   |"
+    ],
+    "description": "Blank three-column row"
+  },
+  "row_3_time": {
+    "prefix": "row_3_time",
+    "body": [
+      "|  ${1: } | ${2:X} | ${3:<CURRENT_TIME>} |"
+    ],
+    "description": "Three-column row with TIME (fill manually)"
+  },
+  "todo": {
+    "prefix": "todo",
+    "body": [
+      "- [ ] ${1:Task Name}"
+    ],
+    "description": "Todo list item"
+  }
+}
