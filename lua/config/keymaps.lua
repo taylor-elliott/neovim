@@ -2,6 +2,9 @@ local h = require("utils.helper")
 
 local map = h.map
 
+map("n", "<F6>", h.open_excalidraw_kitty)
+map("n", "<F5>", h.jump_to_markdown_anchor)
+
 map("n", "Q", "<nop>")
 map({ "n", "i", "v" }, "<Up>", "<nop>")
 map({ "n", "i", "v" }, "<Down>", "<nop>")
@@ -11,7 +14,13 @@ map("n", ";", ":")
 map("n", "q", h.close_quickfix_window)
 map("n", "H", "^")
 map("n", "L", "$")
-map("n", "n", h.search_for_pattern)
+-- map("n", "n", h.search_for_pattern)
+-- map("n", "N", h.search_for_pattern)
+
+map("n", "#", "*zzzv") -- search down page
+map("n", "*", "#zzzv") -- search up page
+
+map("n", "n", "nzzzv")
 map("n", "N", "Nzzzv")
 map("n", "gb", "<C-o>")
 map("n", "gp", h.add_fun)
@@ -28,7 +37,7 @@ map("n", "<leader>l", "$")
 map("n", "<leader>jm", h.repeat_cmd)
 map("n", "<leader>o", "O<Esc>O<Esc>")
 map("n", "<leader>=ap", "ma=ap'a")
-map("x", "<leader>p", [["_dP]])
+map("x", "<leader>P", [["_dP]])
 map("n", "<leader>gp", h.add_print)
 map("n", "<leader>k", "<cmd>lnext<CR>zz")
 map("n", "<leader>j", "<cmd>lprev<CR>zz")
@@ -49,32 +58,34 @@ map("n", "<leader><leader>", "<cmd>Telescope find_files<cr>")
 map("n", "<leader>fa", "<cmd>Telescope find_files follow=true no_ignore=true hidden=true<CR>")
 map("n", "<leader><CR>", h.set_telescope_buffers_config)
 map("n", "<leader>A", h.insert_assertion_at_function_start)
-map("n", "<C-j>", "<cmd>cprev<CR>zz")
-map("n", "<C-k>", "<cmd>cnext<CR>zz")
+-- map("n", "<C-j>", "<cmd>cprev<CR>zz")
+-- map("n", "<C-k>", "<cmd>cnext<CR>zz")
+
+vim.keymap.set("n", "<C-h>", "<C-w>h", { noremap = true })
+vim.keymap.set("n", "<C-j>", "<C-w>j", { noremap = true })
+vim.keymap.set("n", "<C-k>", "<C-w>k", { noremap = true })
+vim.keymap.set("n", "<C-l>", "<C-w>l", { noremap = true })
+-- vim.keymap.set("n", "<C-j>w", "<C-w>w", { noremap = true })
+
 map("n", "<C-Up>", "<cmd>resize +2<cr>")
 map("n", "<C-Down>", "<cmd>resize -2<cr>")
 map("n", "<C-Left>", "<cmd>vertical resize -2<cr>")
 map("n", "<C-Right>", "<cmd>vertical resize +2<cr>")
 map("n", "<C-d>", "<C-d>zz")
 map("n", "<C-u>", "<C-u>zz")
-
-
 map({ "n", "v" }, "Q", function()
     vim.cmd('normal! "Kyy')
 end)
-
 map({ "n", "v" }, "<leader>Q", function()
     if vim.fn.getreg("k") ~= "" then
         vim.cmd('normal! "kp')
     end
     vim.fn.setreg("k", "")
 end)
-
 map({ "n", "v" }, "Y", [["+Y]])
 -- map({ "n", "v" }, "P", '"+p')
 map({ "n", "v" }, "<leader>d", '"_d')
 -- map({ "n", "v" }, "Q", "<Esc>:update<CR>")
-
 map("v", "J", ":m '>+1<CR>gv=gv")
 map("v", "K", ":m '<-2<CR>gv=gv")
 map("v", "<Tab>", ">gv")
@@ -89,8 +100,9 @@ map("i", "<C-j>", "<C-o>j")
 map("i", "<C-k>", "<C-o>k")
 map("i", "<C-l>", "<C-o>l")
 map("i", "jj", "<Esc>")
-map("i", "<C-S-v>", h.paste_system_clipboard)
-
+map("i", "JJ", "<Esc>")
+map("i", "<C-v>", h.paste_system_clipboard)
+-- map("i", "<C-S-v>", h.paste_system_clipboard)
 -- map("n", "<leader>tf", "<Plug>PlenaryTestFile", { noremap = false, silent = false })
 -- map("n", "J", "mzJ`z")
 -- map("n", "<F5>", "ddp")

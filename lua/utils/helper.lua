@@ -1,22 +1,23 @@
 local M = {}
 
+local h = require("utils.git")
 local api = vim.api
 local buf = vim.lsp.buf
 local fn = vim.fn
 
 -- vim.api.nvim_buf_get_lines(buf, firstline, new_lastline, true)
 
-
 local function map(mode, lhs, rhs, opts)
     local default = {
-        silent = true,  -- don't show command in cmdline
+        silent = true, -- don't show command in cmdline
         noremap = true, -- non-recursive mapping
-        desc = nil,     -- description for which-key or keymap listing
+        desc = nil, -- description for which-key or keymap listing
     }
 
     opts = vim.tbl_deep_extend("force", default, opts or {})
     vim.keymap.set(mode, lhs, rhs, opts)
 end
+
 local function X()
     local diagnostics = vim.diagnostic.get(0)
     if vim.tbl_isempty(diagnostics) then
@@ -132,6 +133,7 @@ local function set_theme()
 end
 
 -- location of themes: ~/.local/share/nvim/lazy/gruvbox.nvim/colors/gruvbox.vim
+
 local function pick_theme()
     -- Ensure we have a proper array of strings
     local themes_raw = vim.fn.getcompletion("", "color") or {}
@@ -183,6 +185,7 @@ local print_macros = {
     "q (quit)",
 }
 -- Map macro type to printf format
+
 local fmt_map = {
     int = "%d",
     string = "%s",
@@ -422,14 +425,20 @@ end
 
 local function get_menu(ft)
     local menus = {
-        { title = "Imports",        fn = function() return get_import_values(ft) end },
+        { title = "Git",            fn = h.get_git_values },
+        {
+            title = "Imports",
+            fn = function()
+                return get_import_values(ft)
+            end,
+        },
         { title = "Debug",          fn = get_debug_values },
         { title = "Test",           fn = get_test_values },
         { title = "Asserts",        fn = get_python_asserts },
         -- { title = "Lint", fn = get_lint_values },
         { title = "Datastructures", fn = get_datastructures },
         { title = "Algorithms",     fn = get_algos },
-        { title = "Techniques",     fn = get_techniques },
+        -- { title = "Techniques",     fn = get_techniques },
         { title = "ML",             fn = get_ml_values },
         { title = "Visual",         fn = get_visual_values },
         { title = "Quit",           fn = nil },
@@ -714,18 +723,8 @@ local function run_selection(
 
         for i, _ in ipairs(subActions) do
             map("n", tostring(i), function()
-                run_selection(
-                    i,
-                    subActions,
-                    nil,
-                    main_win,
-                    sub_win,
-                    edit_buf,
-                    indent_str,
-                    current_line,
-                    word,
-                    selection.title
-                )
+                run_selection(i, subActions, nil, main_win, sub_win, edit_buf, indent_str, current_line, word,
+                    selection.title)
             end, { buffer = sub_buf })
         end
 
@@ -768,7 +767,24 @@ local function run_selection(
         handle_lint(selection, main_win, sub_win)
     elseif parent_title == "Test" then
         handle_test(selection, main_win, sub_win)
+    elseif parent_title == "Git" then
+        h.handle_git(selection, main_win, sub_win)
     end
+end
+
+local function get_map(menu, search_key, search_value)
+    local lines = {}
+    for i, e in ipairs(menu) do
+        local value = e[search_key]
+        local lower_value = string.lower(value)
+        local final_value = lower_value:gsub("^%l", string.upper)
+        if lower_value == search_value then
+            table.insert(lines, string.format("%s. %s", "q", final_value))
+        else
+            table.insert(lines, string.format("%d. %s", i, final_value))
+        end
+    end
+    return lines
 end
 
 local function main_menu()
@@ -777,13 +793,9 @@ local function main_menu()
     local main_buf_line = api.nvim_get_current_line()
     local indent_str = (main_buf_line:match("^%s*") or "") .. "    "
     local edit_buf = api.nvim_get_current_buf()
-    local ft = vim.bo.filetype
-    local main, getSub = get_menu(ft)
+    local main, getSub = get_menu()
 
-    local lines = {}
-    for i, a in ipairs(main) do
-        table.insert(lines, string.format("%d. %s", i, a.title))
-    end
+    local lines = get_map(main, "title", "quit")
 
     local main_buf, main_win = create_window(lines, { title = "Main Menu", row = 5, col = 5 })
 
@@ -1003,29 +1015,41 @@ local function get_print()
     api.nvim_buf_set_lines(0, current_line + 1, current_line + 1, false, { lines })
 end
 
-
 local function execute_file()
     if vim.bo.filetype == "python" then
         vim.cmd("write")
         local filepath = fn.expand("%:p")
-        vim.cmd("belowright 10split | terminal python3 " .. filepath)
-        vim.defer_fn(function()
-            local bufnr = api.nvim_get_current_buf()
-            map("n", "q", "<cmd>bd!<CR>", {
-                buffer = bufnr,
-                silent = true,
-                desc = "Close terminal",
-            })
-        end, 100)
+
+        -- Run python script and capture output lines synchronously
+        local output_lines = fn.systemlist("python3 " .. filepath)
+
+        -- Calculate height to fit output (limit max height to 20)
+        local height = math.min(#output_lines + 5, 40)
+
+        -- Open a new split with the correct height and put output in a normal buffer
+        vim.cmd("belowright " .. height .. "split")
+        local buf = api.nvim_create_buf(false, true) -- unlisted scratch buffer
+        api.nvim_win_set_buf(0, buf)
+        api.nvim_buf_set_lines(buf, 0, -1, false, output_lines)
+        vim.bo[buf].filetype = "text"
+
+        -- Map 'q' to close the buffer easily
+        map("n", "q", "<cmd>bd!<CR>", {
+            buffer = buf,
+            silent = true,
+            desc = "Close output buffer",
+        })
     elseif vim.bo.filetype == "c" then
+        -- For C, you can do something similar or just open terminal directly
         vim.cmd("belowright 10split | terminal bash -c 'bear -- make clean all > /dev/null 2>&1 && ./run.sh'")
     else
         print("UNKNOWN FILETYPE")
     end
 end
+
 local function offset()
-    local offset = vim.fn.input("Offset: ")
-    local rel = tonumber(offset)
+    local off = vim.fn.input("Offset: ")
+    local rel = tonumber(off)
     if rel then
         local cur_line = vim.api.nvim_win_get_cursor(0)[1]
         local target = math.max(1, cur_line + rel) -- prevent going before line 1
@@ -1033,6 +1057,7 @@ local function offset()
         vim.cmd("normal! @a")
     end
 end
+
 local function repeat_cmd()
     local off = vim.fn.input("Offset: ")
     local reg = vim.fn.input("Macro register: ")
@@ -1171,8 +1196,15 @@ local function insert_assert()
     end)
 end
 
-local function search_for_pattern()
+local function search_for_patternN()
     local success, _ = pcall(vim.cmd, "normal! nzzzv")
+    if not success then
+        vim.notify("Pattern not found", vim.log.levels.WARN)
+    end
+end
+
+local function search_for_pattern()
+    local success, _ = pcall(vim.cmd, "normal! Nzzzv")
     if not success then
         vim.notify("Pattern not found", vim.log.levels.WARN)
     end
@@ -1226,7 +1258,6 @@ local function close_quickfix_window()
     end
     vim.api.nvim_feedkeys("q", "n", false)
 end
-
 
 local function show_action_window()
     local ft = vim.bo.filetype
@@ -1670,7 +1701,6 @@ local function setC(filename, lines, start_line, end_line)
     print("Extracted to " .. c_path .. " and updated prototypes in " .. h_path)
 end
 
-
 local function create_component(type)
     -- get start and end of visual selection
     local lines, start_line, end_line = getLines()
@@ -1690,7 +1720,120 @@ local function create_component(type)
     end
 end
 
+local function clean_path(path_string)
+    if path_string then
+        return path_string:gsub("^%s+", ""):gsub("%s+$", "")
+    end
+    return nil
+end
 
+local function extract_excalidraw_path(line_content)
+    local markdown_path = line_content:match(".*%[.*%]%((.-%.excalidraw).*%)")
+    if markdown_path then
+        return clean_path(markdown_path)
+    end
+
+    local quoted_path = line_content:match('"([^"]*%.excalidraw)"')
+    if quoted_path then
+        return clean_path(quoted_path)
+    end
+
+    local direct_path = line_content:match("([^%s]+%.excalidraw)")
+    if direct_path then
+        return clean_path(direct_path)
+    end
+
+    return nil
+end
+
+local function open_excalidraw_pwa(filepath)
+    filepath = vim.fn.expand(filepath)
+    local cmd = string.format("chromium-browser --app=https://excalidraw.com %q", filepath)
+    vim.fn.jobstart({ "bash", "-c", cmd }, { detach = true })
+end
+
+-- Main function to extract path and open kitty + excalidraw file
+local function open_excalidraw_kitty()
+    local line_num = vim.api.nvim_win_get_cursor(0)[1]
+    local current_line_content = vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)[1]
+
+    if not current_line_content or current_line_content == "" then
+        print("Error: Current line is empty.")
+        return
+    end
+
+    local path_to_open = extract_excalidraw_path(current_line_content)
+
+    if not path_to_open then
+        print("Error: Could not find an .excalidraw file path on the current line.")
+        return
+    end
+
+    open_excalidraw_pwa(path_to_open)
+end
+
+local function open_excalidraw_kitty2()
+    local current_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local quoted_path = line_content:match('"([^"]*\\.excalidraw)"')
+    -- Determine the path to open: use the argument or the current buffer's path
+    local path_to_open = file_path
+    if path_to_open == nil or path_to_open == "" then
+        -- Get the full path of the current buffer
+        path_to_open = vim.fn.expand("%:p")
+    end
+
+    -- Check if we have a valid file path to avoid execution errors
+    if path_to_open == nil or path_to_open == "" or path_to_open == "N/A" then
+        print("Error: Cannot open Excalidraw. No valid file path found.")
+        return
+    end
+
+    -- THE NON-BLOCKING COMMAND:
+    -- 1. setsid: Ensures the process runs in a new session (fully detached).
+    -- 2. kitty sh -c "...": Launches a new Kitty instance to execute a command.
+    -- 3. xdg-open %s: Opens the file path using the desktop environment (which triggers the browser).
+    -- 4. > /dev/null 2>&1 &: Suppresses output/errors and runs the entire sequence in the background.
+    local command = string.format('setsid kitty sh -c "xdg-open %s" > /dev/null 2>&1 &', path_to_open)
+
+    -- Execute the command using os.execute, which runs the shell command
+    -- and immediately returns control to Neovim due to the '&' at the end.
+    os.execute(command)
+
+    print(string.format("Excalidraw launched for: %s", path_to_open))
+end
+
+local function jump_to_markdown_anchor()
+    local current_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local all_lines = vim.api.nvim_buf_get_lines(0, current_line, current_line + 1, false)
+    local line = all_lines[1]
+
+    -- Match anchor inside (#anchor-name)
+    local anchor_match = string.match(line, "%(#([%w%-]+)%)")
+
+    if not anchor_match then
+        print("No anchor found")
+        return
+    end
+
+    -- Convert anchor-name to Title Case With Spaces to match Markdown headings
+    local header_pattern = anchor_match:gsub("%-", " ")
+
+    -- Search buffer for matching markdown heading (## Some Title)
+    local target_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    for i, l in ipairs(target_lines) do
+        local heading = l:match("^#+%s*(.+)$")
+        if heading and heading:lower() == header_pattern:lower() then
+            -- Found the header, move cursor
+            vim.api.nvim_win_set_cursor(0, { i, 0 }) -- (line, column)
+            return
+        end
+    end
+
+    print("No matching header found for: " .. header_pattern)
+end
+
+M.open_excalidraw_kitty = open_excalidraw_kitty
+M.jump_to_markdown_anchor = jump_to_markdown_anchor
 M.list_concat = list_concat
 M.set_import = set_import
 M.set_barrel = set_barrel
@@ -1702,6 +1845,7 @@ M.close_quickfix_window = close_quickfix_window
 M.add_fun = add_fun
 M.insert_assert = insert_assert
 M.search_for_pattern = search_for_pattern
+M.search_for_patternN = search_for_patternN
 M.add_print = add_print
 M.run_binary = run_binary
 M.goto_explore = goto_explore

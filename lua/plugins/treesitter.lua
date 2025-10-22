@@ -1,6 +1,8 @@
 return {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
+    branch = "master",
+    lazy = false,
     dependencies = {
         "nvim-treesitter/nvim-treesitter-textobjects",
     },
@@ -11,10 +13,10 @@ return {
                 enable = true,
             },
             indent = {
-                enable = true,
+                enable = false,
             },
             fold = {
-                enable = true,
+                enable = false,
             },
             incremental_selection = {
                 enable = true,
@@ -27,35 +29,35 @@ return {
             },
             textobjects = {
                 select = {
-                    enable = true,
+                    enable = false,
                     lookahead = true,
                     keymaps = {
-                        ["af"] = "@function.outer",  -- select a function (outer)
-                        ["if"] = "@function.inner",  -- select inner function
-                        ["ac"] = "@class.outer",     -- select a class (outer)
-                        ["ic"] = "@class.inner",     -- select inner class
+                        ["af"] = "@function.outer", -- select a function (outer)
+                        ["if"] = "@function.inner", -- select inner function
+                        ["ac"] = "@class.outer", -- select a class (outer)
+                        ["ic"] = "@class.inner", -- select inner class
                         ["ap"] = "@parameter.outer", -- select a parameter (outer)
                         ["ip"] = "@parameter.inner", -- select inner parameter
                     },
                 },
                 move = {
                     enable = true,
-                    set_jumps = true,               -- use jumplist
+                    set_jumps = true,   -- use jumplist
                     goto_next_start = {
                         ["]f"] = "@function.outer", -- Go to next function
-                        ["]c"] = "@class.outer",    -- Go to next class
+                        ["]c"] = "@class.outer", -- Go to next class
                     },
                     goto_next_end = {
                         ["]F"] = "@function.outer", -- Go to next function end
-                        ["]C"] = "@class.outer",    -- Go to next class end
+                        ["]C"] = "@class.outer", -- Go to next class end
                     },
                     goto_previous_start = {
                         ["[f"] = "@function.outer", -- Go to previous function
-                        ["[c"] = "@class.outer",    -- Go to previous class
+                        ["[c"] = "@class.outer", -- Go to previous class
                     },
                     goto_previous_end = {
                         ["[F"] = "@function.outer", -- Go to previous function end
-                        ["[C"] = "@class.outer",    -- Go to previous class end
+                        ["[C"] = "@class.outer", -- Go to previous class end
                     },
                 },
                 swap = {
@@ -70,14 +72,14 @@ return {
             },
         })
 
-        vim.filetype.add {
+        vim.filetype.add({
             extension = {
                 tf = "terraform",
                 tfvars = "terraform",
                 pipeline = "groovy",
                 multibranch = "groovy",
                 tex = "latex",
-            }
-        }
+            },
+        })
     end,
 }

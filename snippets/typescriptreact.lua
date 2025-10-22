@@ -6,7 +6,10 @@ local i = ls.insert_node
 local rep = require("luasnip.extras").rep
 
 return {
-    s("map", fmt([[
+    s(
+        "map",
+        fmt(
+            [[
 const {} = {}.map(({}, index) => {{
   return (
     <>
@@ -14,28 +17,46 @@ const {} = {}.map(({}, index) => {{
     </>
   );
 }});
-]], {
-        i(1, "mappedList"),
-        i(2, "listName"),
-        i(3, "item"),
-        i(4, "// JSX or expression"),
-    })),
-    s("list", fmt([[
+]],
+            {
+                i(1, "mappedList"),
+                i(2, "listName"),
+                i(3, "item"),
+                i(4, "// JSX or expression"),
+            }
+        )
+    ),
+    s(
+        "list",
+        fmt(
+            [[
 const {} = [{}];
-]], {
-        i(1, "list"),
-        i(2),
-    })),
+]],
+            {
+                i(1, "list"),
+                i(2),
+            }
+        )
+    ),
 
-    s("div", fmt([[
+    s(
+        "div",
+        fmt(
+            [[
 <div className="{}">
     {}
 </div>
-]], {
-        i(1, ""),
-        i(2),
-    })),
-    s("rfc", fmt([[
+]],
+            {
+                i(1, ""),
+                i(2),
+            }
+        )
+    ),
+    s(
+        "rfc",
+        fmt(
+            [[
 
 interface {}Props {{
   {}
@@ -49,14 +70,17 @@ const {} = (props: {}Props) => {{
     </div>
   );
 }};
-]], {
-        i(1, "Component"),
-        i(2, "// props"),
-        rep(1),
-        rep(1),
-        i(3, ""), -- destructuring left empty by default
-        i(4, "// JSX"),
-    })),
+]],
+            {
+                i(1, "Component"),
+                i(2, "// props"),
+                rep(1),
+                rep(1),
+                i(3, ""), -- destructuring left empty by default
+                i(4, "// JSX"),
+            }
+        )
+    ),
     s("console", {
         t("console.log("),
         i(1),
@@ -78,6 +102,14 @@ const {} = (props: {}Props) => {{
         i(0),
         t({ "", "}" }),
     }),
+    s(
+        "_const_",
+        fmt("const {} = () => {{\n\treturn <div>{}</div>;\n}};\n\nexport default {};", {
+            i(1),
+            rep(1),
+            rep(1),
+        })
+    ),
     s(
         "const",
         fmt("const {} = ({}) => {{\n  {}\n}}", {
@@ -122,26 +154,36 @@ const {} = ({}:{}, {}:{}) => {{
             }
         )
     ),
-    s("cond", fmt("{{ {1} && <{2} /> }}", {
-        i(1, "name"),
-        i(2, "Component"),
-    })),
-    s("cond_exp", fmt("{{ {1} && (\n  <{2} />\n) }}", {
-        i(1, "name"),
-        i(2, "Component"),
-    })),
-    s("cond_imp_map", fmt("{{ {1}.map(({2}) => (\n  <li key={{ {2}.id }}>{2}.{3}</li>\n)) }}", {
-        i(1, "items"),
-        i(2, "item"),
-        i(3, "name"),
-    })), s(
-    "type",
-    fmt("type {} = {{\n  {}: {};\n}}", {
-        i(1, "name"),
-        i(2, "prop"),
-        i(3, "type"),
-    })
-),
+    s(
+        "cond",
+        fmt("{{ {1} && <{2} /> }}", {
+            i(1, "name"),
+            i(2, "Component"),
+        })
+    ),
+    s(
+        "cond_exp",
+        fmt("{{ {1} && (\n  <{2} />\n) }}", {
+            i(1, "name"),
+            i(2, "Component"),
+        })
+    ),
+    s(
+        "cond_imp_map",
+        fmt("{{ {1}.map(({2}) => (\n  <li key={{ {2}.id }}>{2}.{3}</li>\n)) }}", {
+            i(1, "items"),
+            i(2, "item"),
+            i(3, "name"),
+        })
+    ),
+    s(
+        "type",
+        fmt("type {} = {{\n  {}: {};\n}}", {
+            i(1, "name"),
+            i(2, "prop"),
+            i(3, "type"),
+        })
+    ),
     s(
         "interface",
         fmt("interface {} {{\n  {}: {};\n}}", {

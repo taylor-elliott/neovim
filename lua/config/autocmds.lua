@@ -2,14 +2,77 @@ local extract = require("utils.extract")
 local h = require("utils.helper")
 local api = vim.api
 
+local line_colour = "#4F4F4F"
+
 local augroup = vim.api.nvim_create_augroup
 local autocmd = api.nvim_create_autocmd
 
 local format_group = augroup("AutoFormatOnInsertLeave", { clear = true })
 vim.api.nvim_set_hl(0, "YankHighlight", { fg = "#ff0000", bg = "#000000" })
 local yank_group = augroup("HighlightYank", { clear = true })
--- local general = augroup("General", { clear = true })
--- autocmd({ "FocusLost", "BufLeave", "BufWinLeave", "InsertLeave" }, {
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "markdown",
+    callback = function()
+        vim.opt.foldlevel = 1 -- buffer-local for markdown
+    end,
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "*",
+    callback = function()
+        if vim.bo.filetype ~= "markdown" then
+            vim.opt.foldlevel = 99
+        end
+    end,
+})
+
+-- foldevel : controls how deep folds are opened in the currently open buffer
+-- any fold deeper than the level set will be collapsed (if folding is enabled)
+-- foldlevelstart : initial fold visibility on file open
+-- specifies the default foldlevel when a file is opened
+-- after the file loads, foldlevelstart is used once, and then discarded,
+-- fold level takes over
+-- autocmd("FileType", {
+--     callback = function()
+--         if vim.bo.filetype == "c" then
+--             vim.opt.foldlevel = 2
+--         elseif vim.bo.filetype == "lua" then
+--             vim.opt.foldlevel = 99
+--             vim.opt.foldlevelstart = 99
+--         elseif vim.bo.filetype == "python" then
+--             vim.opt.foldlevel = 99
+--             vim.opt.foldlevelstart = 99
+--         elseif vim.bo.filetype == "markdown" then
+--             vim.opt.foldlevel = 99
+--             vim.opt.foldlevelstart = 99
+--         else
+--             vim.opt.foldlevel = 99
+--             vim.opt.foldlevelstart = 99
+--             vim.opt.foldnestmax = 4
+--         end
+--     end,
+-- })
+
+-- vim.api.nvim_create_autocmd("FileType", {
+--     pattern = "markdown_rendered",
+--     callback = function()
+--         local function update_wrap()
+--             local line = vim.api.nvim_get_current_line()
+--             if line:match("^%s*|.*|") then
+--                 vim.wo.wrap = false
+--             else
+--                 vim.wo.wrap = true
+--             end
+--         end
+--
+--         vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+--             pattern = "*",
+--             callback = update_wrap
+--         })
+--     end
+-- })
+-- local general = augroup("General", { clear = true }) autocmd({ "FocusLost", "BufLeave", "BufWinLeave", "InsertLeave" }, {
 --     -- nested = true, -- for format on save
 --     callback = function()
 --         if vim.bo.filetype ~= "" and vim.bo.buftype == "" then
@@ -20,12 +83,41 @@ local yank_group = augroup("HighlightYank", { clear = true })
 --     desc = "Auto Save",
 -- })
 
+local status_ok, image = pcall(require, "image")
+if not status_ok then
+    return
+end
+
+-- Function to check if any telescope window is open
+local function telescope_is_open()
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local buf = vim.api.nvim_win_get_buf(win)
+        local ok, ft = pcall(vim.api.nvim_buf_get_option, buf, "filetype")
+        if ok and ft == "TelescopePrompt" then
+            return true
+        end
+    end
+    return false
+end
+
+-- Event to monitor windows/buffers entering or leaving
+vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter", "WinClosed" }, {
+    callback = function()
+        -- small delay to let telescope do its UI work
+        vim.defer_fn(function()
+            if telescope_is_open() then
+                image.disable()
+            else
+                image.enable()
+            end
+        end, 50)
+    end,
+})
 autocmd({ "BufRead", "BufNewFile" }, {
     callback = function()
         vim.fn.setreg("k", "")
     end,
 })
-
 
 autocmd("FileType", {
     pattern = "qf",
@@ -33,6 +125,7 @@ autocmd("FileType", {
         h.h.map("n", "a", h.open_builtin_code_action_at_quickfix)
     end,
 })
+
 vim.api.nvim_create_autocmd("BufWritePre", {
     pattern = { "*.js", "*.jsx", "*.ts", "*.tsx" },
     callback = function()
@@ -85,13 +178,15 @@ autocmd("FileType", {
 autocmd("BufReadPost", {
     pattern = "*.pdf",
     callback = function()
+        -- os.execute("xdotool key --clearmodifiers Shift+Super+M")
         local file = vim.fn.expand("%:p")
         os.execute("zathura " .. vim.fn.shellescape(file) .. " &")
-        vim.cmd("bdelete")                                  -- close the empty buffer in Neovim
+        vim.cmd("bdelete")                              -- close the empty buffer in Neovim
         vim.cmd("Explore")
         local parent_dir = vim.fn.fnamemodify(file, ":h:h") -- two :h to go one dir up
         local notes_file = parent_dir .. "/notes.md"
         vim.cmd("edit " .. vim.fn.fnameescape(notes_file))
+        vim.cmd("set filetype=markdown")
     end,
 })
 
@@ -144,45 +239,27 @@ autocmd("BufReadPost", {
 --             return nil
 --         end
 -- 		if client:supports_method("textDocument/foldingRange") then
--- 			local win = vim.api.nvim_get_current_win()
--- 			vim.wo[win][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
+-- 			local win = vim.api.nvim_get_current_win() vim.wo[win][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
 -- 		end
 -- 	end,
 -- })
 
-autocmd("FileType", {
-    callback = function()
-        vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-        if vim.bo.filetype == "c" then
-            vim.opt.foldlevel = 3
-        elseif vim.bo.filetype == "markdown" then
-            vim.opt.foldmethod = "expr"
-            vim.opt.foldlevel = 3
-            vim.opt.foldlevelstart = 1
-        else
-            vim.opt.foldmethod = "expr"
-            vim.opt.foldtext = ""
-            vim.opt.foldlevel = 3
-            vim.opt.foldlevelstart = 3
-            vim.opt.foldnestmax = 3
-        end
-    end,
-})
-
 autocmd("ColorScheme", {
     pattern = "*",
     callback = function()
-        vim.api.nvim_set_hl(0, "LineNrAbove", {})
-        vim.api.nvim_set_hl(0, "LineNrBelow", {})
-        vim.api.nvim_set_hl(0, "LineNr", { fg = "#98C379", bold = true })
+        vim.api.nvim_set_hl(0, "LineNrAbove", { fg = line_colour })
+        vim.api.nvim_set_hl(0, "LineNrBelow", { fg = line_colour })
+        vim.api.nvim_set_hl(0, "LineNr", { fg = "#F2EB61", bold = true })
     end,
 })
+vim.cmd("doautocmd ColorScheme")
+
 autocmd("TextYankPost", {
     group = yank_group,
     pattern = "*",
     callback = function()
         vim.highlight.on_yank({
-            timeout = 150,
+            timeout = 100,
             higroup = "IncSearch",
         })
     end,
@@ -194,6 +271,7 @@ autocmd("TextYankPost", {
 -- 		vim.keymap.set("t", "q", [[<C-\><C-n><cmd>close<CR>]], { buffer = true, silent = true })
 -- 	end,
 -- })
+
 autocmd({ "BufWritePre" }, {
     group = format_group,
     pattern = "*",
@@ -281,8 +359,10 @@ autocmd("LspAttach", {
         end
         -- Auto-format ("lint") on save.
         -- Usually not needed if server supports "textDocument/willSaveWaitUntil".
-        if not client:supports_method("textDocument/willSaveWaitUntil")
-            and client:supports_method("textDocument/formatting") then
+        if
+            not client:supports_method("textDocument/willSaveWaitUntil")
+            and client:supports_method("textDocument/formatting")
+        then
             vim.api.nvim_create_autocmd("BufWritePre", {
                 group = vim.api.nvim_create_augroup("my.lsp", { clear = false }),
                 buffer = args.buf,
@@ -294,9 +374,12 @@ autocmd("LspAttach", {
     end,
 })
 
-
-
 local latex_to_unicode = {
+
+    ["\\frac{1}{4}"] = "¼",
+    ["\\frac{1}{2}"] = "½",
+    ["\\frac{3}{4}"] = "¾",
+
     ["\\sup0"] = "⁰",
     ["\\sup1"] = "¹",
     ["\\sup2"] = "²",
@@ -399,18 +482,15 @@ local latex_to_unicode = {
     ["\\pi"] = "π",
     ["\\rho"] = "ρ",
     ["\\sigma"] = "σ",
-    ["\\std"] = "σ",
     ["\\tau"] = "τ",
     ["\\phi"] = "φ",
     ["\\chi"] = "χ",
     ["\\psi"] = "ψ",
     ["\\omega"] = "ω",
-    ["\\setnatural"] = "ℕ",
-    ["\\setreal"] = "ℝ",
     ["\\xbar"] = "x̄",
     ["\\xhat"] = "x̂",
     ["\\upphi"] = "Φ",
-    ["\\sum"] = "∑",
+    ["\\Sigma"] = "∑",
     ["\\integral"] = "∫",
     ["\\prod"] = "∏",
     ["\\infty"] = "∞",
@@ -420,53 +500,68 @@ local latex_to_unicode = {
     ["\\neq"] = "≠",
     ["\\times"] = "×",
     ["\\pm"] = "±",
+    ["\\mp"] = "∓",
     ["\\botharrow"] = "⟷",
     ["\\leftarrow"] = "🠐",
     ["\\rightarrow"] = "🠒",
+    ["\\Rightarrow"] = "⇒",
+    ["\\Leftarrow"] = "⇐",
+    ["\\leftrightarrow"] = "↔",
     ["\\doublebar"] = "‖",
     -- Logical / set symbols
     ["\\land"] = "∧", -- logical AND
     ["\\lor"] = "∨", -- logical OR
     ["\\lnot"] = "¬", -- negation
     ["\\not"] = "¬", -- negation
+
+    -- SETS
     ["\\emptyset"] = "∅", -- empty set
-    ["\\empty"] = "∅", -- empty set
+    ["\\setnatural"] = "ℕ",
+    ["\\setreal"] = "ℝ",
     ["\\uniset"] = "𝕌",
+
     ["\\identity"] = "𝟙", -- identity operator
     ["\\iden"] = "𝟙", -- identity operator
+    --
     -- Set operations
-    ["\\union"] = "∪",
-    ["\\inter"] = "∩",
-    ["\\intersection"] = "∩",
+    ["\\cup"] = "∪",
+    ["\\cap"] = "∩",
     -- Equivalence / triple bar
     ["\\equ"] = "＝",
+
+    ["\\cdot"] = "⋅",
+    ["\\approx"] = "≈",
+    ["\\equiv"] = "≡",
     ["\\3bar"] = "≡",
     ["\\line"] = "⎯",
+    ["\\psubset"] = "⊂",
     ["\\subset"] = "⊆",
     ["\\notsubset"] = "⊈",
-    ["\\contains"] = "∈",
-    ["\\ele"] = "∈",
-    ["\\elumentof"] = "∈",
-    ["\\notelementof"] = "∉",
-    ["\\notele"] = "∉",
+    ["\\in"] = "∈",
+    ["\\notin"] = "∉",
+    ["\\forall"] = "∀",
+    ["\\exists"] = "∃",
+    ["\\nexists"] = "∄",
+    ["\\div"] = "÷",
     ["\\itlambda"] = "𝜆",
-    ["\\iti"] = "𝑖",
-    ["\\itx"] = "𝑥",
-    ["\\itmu"] = "𝜇",
-    ["\\itmean"] = "𝜇",
-    ["\\itstd"] = "𝜎",
+    ["\\ii"] = "𝑖",
+    ["\\ix"] = "𝑥",
+    ["\\iv"] = "𝑣",
+    ["\\imu"] = "𝜇",
+    ["\\imean"] = "𝜇",
+    ["\\istd"] = "𝜎",
     ["\\join"] = "⋈",
-    ["\\itA"] = "𝘈",
-    ["\\itB"] = "𝘉",
-    ["\\itC"] = "𝘊",
-    ["\\itf"] = "𝑓",
-    ["\\ity"] = "𝑦",
-    ["\\itj"] = "𝑗",
-    ["\\itk"] = "𝑘",
-    ["\\ita"] = "𝒶",
-    ["\\itb"] = "𝒷",
-    ["\\itc"] = "𝒸",
-
+    ["\\iA"] = "𝘈",
+    ["\\iB"] = "𝘉",
+    ["\\iC"] = "𝘊",
+    ["\\if"] = "𝑓",
+    ["\\iy"] = "𝑦",
+    ["\\ij"] = "𝑗",
+    ["\\ik"] = "𝑘",
+    ["\\ia"] = "𝒶",
+    ["\\ib"] = "𝒷",
+    ["\\ic"] = "𝒸",
+    ["\\yhat"] = "ŷ",
 }
 
 local function convert_latex_to_unicode()

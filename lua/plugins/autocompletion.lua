@@ -4,7 +4,7 @@ return {
         lazy = false,
         priority = 100,
         dependencies = {
-            "luckasRanarison/tailwind-tools.nvim",
+            -- "luckasRanarison/tailwind-tools.nvim",
             "onsails/lspkind-nvim",
             -- "neovim/nvim-lspconfig",
             -- "roobert/tailwindcss-colorizer-cmp.nvim",
